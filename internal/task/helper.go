@@ -51,7 +51,10 @@ func (t Tasks) writeFile(file *os.File) {
 		log.Fatalf("marshalling err: %v", err)
 	}
 
-	fm.SeekPosition(file)
+	fm.SeekStartPos(file)
+	if err := file.Truncate(int64(fm.SeekCurrentPos(file))); err != nil {
+		log.Fatalf("failed to truncate file: %v", err)
+	}
 
 	if _, err := file.Write(b); err != nil {
 		log.Fatalf("writing task error: %v", err)

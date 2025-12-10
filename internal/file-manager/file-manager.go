@@ -42,8 +42,16 @@ func ReadFile(file *os.File) []byte {
 	return fileContent
 }
 
-func SeekPosition(file *os.File) {
+func SeekStartPos(file *os.File) {
 	if _, err := file.Seek(0, io.SeekStart); err != nil {
 		log.Fatalf("seek position error: %v", err)
 	}
+}
+
+func SeekCurrentPos(file *os.File) int {
+	pos, err := file.Seek(0, io.SeekCurrent)
+	if err != nil {
+		log.Fatalf("ailed to get current position: %v", err)
+	}
+	return int(pos)
 }
