@@ -3,7 +3,7 @@ package main
 import (
 	"log"
 
-	"github.com/Archiker-715/Task-Tracker/task"
+	"github.com/Archiker-715/Task-Tracker/internal/task"
 )
 
 // todo: везде чекнуть file.Close
