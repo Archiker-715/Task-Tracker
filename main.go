@@ -12,7 +12,7 @@ func main() {
 
 	// addTask()
 
-	updateTask(2)
+	updateTask(1)
 }
 
 func addTask() {
@@ -23,7 +23,7 @@ func addTask() {
 }
 
 func updateTask(taskId int) {
-	err := tasks.UpdateTask(taskId, "but car")
+	err := tasks.UpdateTask(taskId, "mark-done")
 	if err != nil {
 		log.Fatalf("update task error: %v", err)
 	}
