@@ -1,56 +1,37 @@
 package task
 
 import (
-	"encoding/json"
-	"log"
+	"fmt"
 	"os"
 	"time"
+
+	"github.com/Archiker-715/Task-Tracker/constants"
 )
 
-func fillTask(file *os.File, taskDescription, taskStatus string, fileSize int) {
-
-	allTasks := &Tasks{}
+func (t *Tasks) addTask(file *os.File, taskDescription string, fileSize int) {
 
 	if fileSize > 0 {
-		if err := json.Unmarshal(readFile(file), allTasks); err != nil {
-			log.Fatalf("unmarshalling err: %v", err)
-		}
+		unmarshallFile(file, t)
 	}
 
-	maxId := getMaxId(*allTasks)
-
-	newTask := Task{
-		Id:          maxId + 1,
+	t.Tasks = append(t.Tasks, Task{
+		Id:          (*t).findMaxId() + 1,
 		Description: taskDescription,
-		Status:      taskStatus,
+		Status:      constants.Todo,
 		CreatedAt:   time.Now(),
-	}
+	})
 
-	allTasks.Tasks = append(allTasks.Tasks, newTask)
-
-	b, err := json.Marshal(allTasks)
-	if err != nil {
-		log.Fatalf("marshalling err: %v", err)
-	}
-
-	seekPosition(file)
-
-	if _, err := file.Write(b); err != nil {
-		log.Fatalf("fill taskfile error: %v", err)
-	}
+	t.writeFile(file)
 }
 
-func getMaxId(allTasks Tasks) int {
-	var maxId int
+func (t *Tasks) updateTask(file *os.File, taskId int, data string) error {
+	unmarshallFile(file, t)
 
-	if len(allTasks.Tasks) > 0 {
-		maxId = allTasks.Tasks[0].Id
-		for _, task := range allTasks.Tasks {
-			if task.Id > maxId {
-				maxId = task.Id
-			}
-		}
-		return maxId
+	if err := t.updateTaskData(taskId, data); err != nil {
+		return fmt.Errorf("failed update task: %w", err)
 	}
-	return 0
+
+	t.writeFile(file)
+
+	return nil
 }
