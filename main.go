@@ -23,7 +23,7 @@ func addTask() {
 }
 
 func updateTask(taskId int) {
-	err := tasks.UpdateTask(taskId, "mark-done")
+	err := tasks.UpdateTask(taskId, "b")
 	if err != nil {
 		log.Fatalf("update task error: %v", err)
 	}
