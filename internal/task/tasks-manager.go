@@ -27,7 +27,7 @@ func (t *Tasks) addTask(file *os.File, taskDescription string, fileSize int) {
 func (t *Tasks) updateTask(file *os.File, taskId int, data string) error {
 	unmarshallFile(file, t)
 
-	func() error {
+	err := func() error {
 		for i := range t.Tasks {
 			if t.Tasks[i].Id == taskId {
 				var updated = time.Now().Format("2006-01-02 15:04:05")
@@ -49,6 +49,33 @@ func (t *Tasks) updateTask(file *os.File, taskId int, data string) error {
 		}
 		return fmt.Errorf("taskId %q not found", taskId)
 	}()
+	if err != nil {
+		return fmt.Errorf("update task error: %w", err)
+	}
+
+	t.writeFile(file)
+
+	return nil
+}
+
+func (t *Tasks) deleteTask(file *os.File, taskId int) error {
+	unmarshallFile(file, t)
+
+	err := func() error {
+		for i := range t.Tasks {
+			if t.Tasks[i].Id == taskId {
+				leftTasks := t.Tasks[:i]
+				rightTasks := t.Tasks[i+1:]
+				outputTasks := append(leftTasks, rightTasks...)
+				t.Tasks = outputTasks
+				return nil
+			}
+		}
+		return fmt.Errorf("taskId %q not found", taskId)
+	}()
+	if err != nil {
+		return fmt.Errorf("update task error: %w", err)
+	}
 
 	t.writeFile(file)
 

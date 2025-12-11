@@ -40,19 +40,24 @@ func (t *Tasks) AddTask(taskDescription string) (err error) {
 }
 
 func (t *Tasks) UpdateTask(taskId int, data string) error {
-	var (
-		fileNotExists = fmt.Errorf("%q not found, please add your first task", constants.TasksFileName)
-		emptyFile     = fmt.Errorf("%q is empty, please add your first task", constants.TasksFileName)
-	)
-
-	if ok, size := fm.FileExists(constants.TasksFileName); !ok {
-		return fileNotExists
-	} else if ok && size == 0 {
-		return emptyFile
+	if err := checkFileExist(constants.TasksFileName); err != nil {
+		return fmt.Errorf("check file exist err: %w", err)
 	}
 
 	if err := t.updateTask(fm.OpenFile(constants.TasksFileName), taskId, data); err != nil {
 		return fmt.Errorf("update task: %w", err)
+	}
+
+	return nil
+}
+
+func (t *Tasks) DeleteTask(taskId int) error {
+	if err := checkFileExist(constants.TasksFileName); err != nil {
+		return fmt.Errorf("check file exist err: %w", err)
+	}
+
+	if err := t.deleteTask(fm.OpenFile(constants.TasksFileName), taskId); err != nil {
+		return fmt.Errorf("delete task: %w", err)
 	}
 
 	return nil
