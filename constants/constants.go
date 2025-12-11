@@ -8,7 +8,7 @@ const (
 	InProgress = "in-progress"
 	Done       = "done"
 
-	// key for marking tasks
+	// keys for marking tasks
 	MarkInProgress = "mark-in-progress"
 	MarkDone       = "mark-done"
 )

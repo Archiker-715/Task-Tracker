@@ -18,7 +18,7 @@ func (t *Tasks) addTask(file *os.File, taskDescription string, fileSize int) {
 		Id:          (*t).findMaxId() + 1,
 		Description: taskDescription,
 		Status:      constants.Todo,
-		CreatedAt:   time.Now(),
+		CreatedAt:   time.Now().Format("2006-01-02 15:04:05"),
 	})
 
 	t.writeFile(file)
@@ -27,9 +27,28 @@ func (t *Tasks) addTask(file *os.File, taskDescription string, fileSize int) {
 func (t *Tasks) updateTask(file *os.File, taskId int, data string) error {
 	unmarshallFile(file, t)
 
-	if err := t.updateTaskData(taskId, data); err != nil {
-		return fmt.Errorf("failed update task: %w", err)
-	}
+	func() error {
+		for i := range t.Tasks {
+			if t.Tasks[i].Id == taskId {
+				var updated = time.Now().Format("2006-01-02 15:04:05")
+				switch data {
+				case constants.MarkInProgress:
+					t.Tasks[i].Status = constants.InProgress
+					t.Tasks[i].UpdatedAt = updated
+					return nil
+				case constants.MarkDone:
+					t.Tasks[i].Status = constants.Done
+					t.Tasks[i].UpdatedAt = updated
+					return nil
+				default:
+					t.Tasks[i].Description = data
+					t.Tasks[i].UpdatedAt = updated
+					return nil
+				}
+			}
+		}
+		return fmt.Errorf("taskId %q not found", taskId)
+	}()
 
 	t.writeFile(file)
 

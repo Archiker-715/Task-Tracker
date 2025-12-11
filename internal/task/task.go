@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"time"
 
 	"github.com/Archiker-715/Task-Tracker/constants"
 	fm "github.com/Archiker-715/Task-Tracker/internal/file-manager"
@@ -15,11 +14,11 @@ type Tasks struct {
 }
 
 type Task struct {
-	Id          int       `json:"id"`
-	Description string    `json:"description"`
-	Status      string    `json:"status"`
-	CreatedAt   time.Time `json:"createdAt"`
-	UpdatedAt   time.Time `json:"updatedAt"`
+	Id          int    `json:"id"`
+	Description string `json:"description"`
+	Status      string `json:"status"`
+	CreatedAt   string `json:"createdAt"`
+	UpdatedAt   string `json:"updatedAt"`
 }
 
 func (t *Tasks) AddTask(taskDescription string) (err error) {
