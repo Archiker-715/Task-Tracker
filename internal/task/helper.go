@@ -2,9 +2,11 @@ package task
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"os"
 
+	"github.com/Archiker-715/Task-Tracker/constants"
 	fm "github.com/Archiker-715/Task-Tracker/internal/file-manager"
 )
 
@@ -44,4 +46,19 @@ func unmarshallFile(file *os.File, v interface{}) {
 	if err := json.Unmarshal(fm.ReadFile(file), v); err != nil {
 		log.Fatalf("unmarshalling err: %v", err)
 	}
+}
+
+func checkFileExist(fileName string) error {
+	var (
+		fileNotExists = fmt.Errorf("%q not found, please add your first task", constants.TasksFileName)
+		emptyFile     = fmt.Errorf("%q is empty, please add your first task", constants.TasksFileName)
+	)
+
+	if ok, size := fm.FileExists(constants.TasksFileName); !ok {
+		return fileNotExists
+	} else if ok && size == 0 {
+		return emptyFile
+	}
+
+	return nil
 }
