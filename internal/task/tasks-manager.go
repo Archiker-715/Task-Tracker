@@ -1,11 +1,13 @@
 package task
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 	"time"
 
 	"github.com/Archiker-715/Task-Tracker/constants"
+	fm "github.com/Archiker-715/Task-Tracker/internal/file-manager"
 )
 
 func (t *Tasks) addTask(file *os.File, taskDescription string, fileSize int) {
@@ -22,6 +24,57 @@ func (t *Tasks) addTask(file *os.File, taskDescription string, fileSize int) {
 	})
 
 	t.writeFile(file)
+}
+
+func (t *Tasks) listTasks(file *os.File) error {
+
+	var jsonData interface{}
+	err := json.Unmarshal(fm.ReadFile(file), &jsonData)
+	if err != nil {
+		return fmt.Errorf("err while parsing file: %w", err)
+	}
+
+	formattedJSON, err := json.MarshalIndent(jsonData, "", "  ")
+	if err != nil {
+		return fmt.Errorf("marshalling indent err: %w", err)
+	}
+
+	fmt.Println(string(formattedJSON))
+
+	return nil
+}
+
+func (t *Tasks) filteredListTasks(file *os.File, filter string) error {
+
+	unmarshallFile(file, t)
+
+	var outputTasks Tasks
+
+	for i := range t.Tasks {
+		if t.Tasks[i].Status == filter {
+			outputTasks.Tasks = append(outputTasks.Tasks, t.Tasks[i])
+		}
+	}
+
+	if len(outputTasks.Tasks) == 0 {
+		fmt.Printf("Tasks with status %q not found\n", filter)
+		return nil
+	}
+
+	// var jsonData interface{}
+	// err := json.Unmarshal(fm.ReadFile(file), &jsonData)
+	// if err != nil {
+	// 	return fmt.Errorf("err while parsing file: %w", err)
+	// }
+
+	formattedJSON, err := json.MarshalIndent(outputTasks, "", "  ")
+	if err != nil {
+		return fmt.Errorf("marshalling indent err: %w", err)
+	}
+
+	fmt.Println(string(formattedJSON))
+
+	return nil
 }
 
 func (t *Tasks) updateTask(file *os.File, taskId int, data string) error {

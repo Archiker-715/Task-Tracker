@@ -28,12 +28,36 @@ func (t *Tasks) AddTask(taskDescription string) (err error) {
 	if ok, size := fm.FileExists(constants.TasksFileName); !ok {
 		log.Printf("%q not found, will be created in current directory\n", constants.TasksFileName)
 		if file, err = fm.CreateFile(constants.TasksFileName); err != nil {
-			return fmt.Errorf("add task error: %w", err)
+			return fmt.Errorf("add taskfile error: %w", err)
 		}
 		log.Printf("file %q successfully created", constants.TasksFileName)
 		t.addTask(file, taskDescription, size)
 	} else {
 		t.addTask(fm.OpenFile(constants.TasksFileName), taskDescription, size)
+	}
+
+	return nil
+}
+
+func (t *Tasks) ListTasks() (err error) {
+	if err := checkFileExist(constants.TasksFileName); err != nil {
+		return fmt.Errorf("check file exist err: %w", err)
+	}
+
+	if err := t.listTasks(fm.OpenFile(constants.TasksFileName)); err != nil {
+		return fmt.Errorf("update task: %w", err)
+	}
+
+	return nil
+}
+
+func (t *Tasks) FilteredListTasks(filter string) (err error) {
+	if err := checkFileExist(constants.TasksFileName); err != nil {
+		return fmt.Errorf("check file exist err: %w", err)
+	}
+
+	if err := t.filteredListTasks(fm.OpenFile(constants.TasksFileName), filter); err != nil {
+		return fmt.Errorf("update task: %w", err)
 	}
 
 	return nil

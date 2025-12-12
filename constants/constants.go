@@ -11,4 +11,10 @@ const (
 	// keys for marking tasks
 	MarkInProgress = "mark-in-progress"
 	MarkDone       = "mark-done"
+
+	// keys for operation tasks
+	Add    = "add"
+	List   = "list"
+	Update = "update"
+	Delete = "delete"
 )
