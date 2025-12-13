@@ -3,6 +3,7 @@ package task
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"os"
 	"time"
 
@@ -10,23 +11,62 @@ import (
 	fm "github.com/Archiker-715/Task-Tracker/internal/file-manager"
 )
 
-func (t *Tasks) addTask(file *os.File, taskDescription string, fileSize int) {
+type Tasks struct {
+	Tasks []Task `json:"Tasks"`
+}
 
-	if fileSize > 0 {
-		unmarshallFile(file, t)
+type Task struct {
+	Id          int    `json:"id"`
+	Description string `json:"description"`
+	Status      string `json:"status"`
+	CreatedAt   string `json:"createdAt"`
+	UpdatedAt   string `json:"updatedAt"`
+}
+
+func (t *Tasks) AddTask(taskDescription string) (int, error) {
+
+	var (
+		file *os.File
+		err  error
+	)
+
+	ok, _ := fm.FileExists(constants.TasksFileName)
+	if !ok {
+		log.Printf("%q not found, will be created in current directory\n", constants.TasksFileName)
+		if file, err = fm.CreateFile(constants.TasksFileName); err != nil {
+			return 0, fmt.Errorf("add taskfile error: %w", err)
+		}
+		t.writeFile(file)
+		log.Printf("file %q successfully created", constants.TasksFileName)
+	} else {
+		file = fm.OpenFile(constants.TasksFileName)
 	}
+	defer file.Close()
+
+	unmarshallFile(file, t)
+
+	newTaskId := (*t).findMaxId() + 1
 
 	t.Tasks = append(t.Tasks, Task{
-		Id:          (*t).findMaxId() + 1,
+		Id:          newTaskId,
 		Description: taskDescription,
 		Status:      constants.Todo,
 		CreatedAt:   time.Now().Format("2006-01-02 15:04:05"),
 	})
 
 	t.writeFile(file)
+
+	return newTaskId, nil
 }
 
-func (t *Tasks) listTasks(file *os.File) error {
+func (t *Tasks) ListTasks() error {
+
+	if err := checkFileExist(constants.TasksFileName); err != nil {
+		return fmt.Errorf("check file exist err: %w", err)
+	}
+
+	file := fm.OpenFile(constants.TasksFileName)
+	defer file.Close()
 
 	var jsonData interface{}
 	err := json.Unmarshal(fm.ReadFile(file), &jsonData)
@@ -44,7 +84,14 @@ func (t *Tasks) listTasks(file *os.File) error {
 	return nil
 }
 
-func (t *Tasks) filteredListTasks(file *os.File, filter string) error {
+func (t *Tasks) FilteredListTasks(filter string) error {
+
+	if err := checkFileExist(constants.TasksFileName); err != nil {
+		return fmt.Errorf("check file exist err: %w", err)
+	}
+
+	file := fm.OpenFile(constants.TasksFileName)
+	defer file.Close()
 
 	unmarshallFile(file, t)
 
@@ -61,12 +108,6 @@ func (t *Tasks) filteredListTasks(file *os.File, filter string) error {
 		return nil
 	}
 
-	// var jsonData interface{}
-	// err := json.Unmarshal(fm.ReadFile(file), &jsonData)
-	// if err != nil {
-	// 	return fmt.Errorf("err while parsing file: %w", err)
-	// }
-
 	formattedJSON, err := json.MarshalIndent(outputTasks, "", "  ")
 	if err != nil {
 		return fmt.Errorf("marshalling indent err: %w", err)
@@ -77,7 +118,15 @@ func (t *Tasks) filteredListTasks(file *os.File, filter string) error {
 	return nil
 }
 
-func (t *Tasks) updateTask(file *os.File, taskId int, data string) error {
+func (t *Tasks) UpdateTask(taskId int, data string) error {
+
+	if err := checkFileExist(constants.TasksFileName); err != nil {
+		return fmt.Errorf("check file exist err: %w", err)
+	}
+
+	file := fm.OpenFile(constants.TasksFileName)
+	defer file.Close()
+
 	unmarshallFile(file, t)
 
 	err := func() error {
@@ -111,7 +160,13 @@ func (t *Tasks) updateTask(file *os.File, taskId int, data string) error {
 	return nil
 }
 
-func (t *Tasks) deleteTask(file *os.File, taskId int) error {
+func (t *Tasks) DeleteTask(taskId int) error {
+	if err := checkFileExist(constants.TasksFileName); err != nil {
+		return fmt.Errorf("check file exist err: %w", err)
+	}
+
+	file := fm.OpenFile(constants.TasksFileName)
+	defer file.Close()
 	unmarshallFile(file, t)
 
 	err := func() error {

@@ -3,7 +3,6 @@ package main
 import (
 	"bufio"
 	"fmt"
-	"log"
 	"os"
 	"strconv"
 	"strings"
@@ -16,111 +15,103 @@ var tasks *task.Tasks = &task.Tasks{}
 
 func main() {
 
-	var (
-		taskDecription string
-	)
-
 	reader := bufio.NewReader(os.Stdin)
+	fmt.Printf("Hello! Insert your task request\n")
 
-	fmt.Printf("Hello! Insert your operation with task\n")
-	usersInput, _ := reader.ReadString('\n')
-	formattedInput := strings.TrimSpace(usersInput)
-	inp := strings.Split(formattedInput, " ")
+cliLoop:
+	for {
+		usersInput, _ := reader.ReadString('\n')
+		formattedInput := strings.TrimSpace(usersInput)
+		inp := strings.Split(formattedInput, " ")
 
-	if strings.Contains(formattedInput, `"`) {
-		firstIdx := strings.Index(formattedInput, `"`)
-		if firstIdx == -1 {
-			log.Println("not found")
-		}
-		firstPartString := formattedInput[firstIdx+1:]
-
-		secondIdx := strings.Index(firstPartString, `"`)
-		if firstIdx == -1 {
-			log.Println("not found")
-		}
-		taskDecription = firstPartString[:secondIdx]
-	}
-
-	switch inp[0] {
-	case constants.List:
-		if len(inp) == 1 {
-			listTasks()
-		} else {
-			switch inp[1] {
-			case constants.Done:
-				filteredListTasks(inp[1])
-			case constants.Todo:
-				filteredListTasks(inp[1])
-			case constants.InProgress:
-				filteredListTasks(inp[1])
-			default:
-				// err
+		switch inp[0] {
+		case constants.List:
+			if err := listTasks(inp); err != nil {
+				fmt.Printf("error when adding task: '%v'. Please try again", err)
 			}
+		case constants.Add:
+			if err := addTask(formattedInput); err != nil {
+				fmt.Printf("error when adding task: '%v'. Please try again", err)
+			}
+		case constants.MarkInProgress:
+			if err := updateStatusTask(inp); err != nil {
+				fmt.Printf("error when updating task's status: '%v'. Please try again", err)
+			}
+		case constants.MarkDone:
+			if err := updateStatusTask(inp); err != nil {
+				fmt.Printf("error when updating task's status: '%v'. Please try again", err)
+			}
+		case constants.Delete:
+			if err := deleteTask(inp); err != nil {
+				fmt.Printf("error when deleting task's status: '%v'. Please try again", err)
+			}
+		case constants.Update:
+			if err := updateTask(inp, formattedInput); err != nil {
+				fmt.Printf("error when updating task: '%v'. Please try again", err)
+			}
+		case constants.Exit:
+			break cliLoop
+		default:
+			fmt.Printf("no one operation match with %q. Please try again", inp[1])
+			continue
 		}
-	case constants.Add:
-		addTask(taskDecription)
-		fmt.Printf("Task added successfully (ID: \n")
-	case constants.MarkInProgress:
-		taskId, err := strconv.Atoi(inp[1])
-		if err != nil {
-			// err
-		}
-		updateTask(taskId, inp[0])
-	case constants.MarkDone:
-		taskId, err := strconv.Atoi(inp[1])
-		if err != nil {
-			// err
-		}
-		updateTask(taskId, inp[0])
-	case constants.Delete:
-		taskId, err := strconv.Atoi(inp[1])
-		if err != nil {
-			// err
-		}
-		deleteTask(taskId)
-	case constants.Update:
-		taskId, err := strconv.Atoi(inp[1])
-		if err != nil {
-			// err
-		}
-		updateTask(taskId, taskDecription)
-	default:
-		// err
-	}
-
-}
-
-func addTask(taskDescription string) {
-	err := tasks.AddTask(taskDescription)
-	if err != nil {
-		log.Fatalf("add task error: %v", err)
 	}
 }
 
-func listTasks() {
-	err := tasks.ListTasks()
+func addTask(rawTaskDescription string) error {
+	taskDecription, err := task.Unquote(rawTaskDescription)
 	if err != nil {
-		log.Fatalf("add task error: %v", err)
+		return fmt.Errorf("%v", err)
+	}
+	newTaskId, err := tasks.AddTask(taskDecription)
+	if err != nil {
+		return fmt.Errorf("%v", err)
+	}
+	fmt.Printf("Task added successfully (ID: %d)\n", newTaskId)
+	return nil
+}
+
+func listTasks(s []string) error {
+	if len(s) == 1 {
+		err := tasks.ListTasks()
+		return task.CheckErr(err)
+	}
+
+	if s[1] == constants.Done || s[1] == constants.Todo || s[1] == constants.InProgress {
+		err := tasks.FilteredListTasks(s[1])
+		return task.CheckErr(err)
+	} else {
+		return fmt.Errorf("no one operation match with %q", s[1])
 	}
 }
 
-func filteredListTasks(filter string) {
-	err := tasks.FilteredListTasks(filter)
+func updateStatusTask(s []string) error {
+	taskId, err := strconv.Atoi(s[1])
 	if err != nil {
-		log.Fatalf("add task error: %v", err)
+		return fmt.Errorf("failed get taskId")
 	}
+	err = tasks.UpdateTask(taskId, s[0])
+	return task.CheckErr(err)
 }
 
-func updateTask(taskId int, taskData string) {
-	err := tasks.UpdateTask(taskId, taskData)
+func updateTask(s []string, rawTaskDescription string) error {
+	taskDecription, err := task.Unquote(rawTaskDescription)
 	if err != nil {
-		log.Fatalf("update task error: %v", err)
+		return fmt.Errorf("%v", err)
 	}
+	taskId, err := strconv.Atoi(s[1])
+	if err != nil {
+		return fmt.Errorf("failed get taskId")
+	}
+	err = tasks.UpdateTask(taskId, taskDecription)
+	return task.CheckErr(err)
 }
 
-func deleteTask(taskId int) {
-	err := tasks.DeleteTask(taskId)
+func deleteTask(s []string) error {
+	taskId, err := strconv.Atoi(s[1])
 	if err != nil {
-		log.Fatalf("delete task error: %v", err)
+		return fmt.Errorf("failed get taskId")
 	}
+	err = tasks.DeleteTask(taskId)
+	return task.CheckErr(err)
 }

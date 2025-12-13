@@ -17,4 +17,7 @@ const (
 	List   = "list"
 	Update = "update"
 	Delete = "delete"
+
+	// key for navigate in app
+	Exit = "exit"
 )

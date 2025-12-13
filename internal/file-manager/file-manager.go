@@ -34,6 +34,7 @@ func OpenFile(fileName string) *os.File {
 }
 
 func ReadFile(file *os.File) []byte {
+	SeekStartPos(file)
 	fileContent, err := io.ReadAll(file)
 	if err != nil {
 		log.Fatalf("read file error: %v", err)
